@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เครื่องมือคำนวณ Sample Size — ตรวจพบอย่างน้อย 1 หน่วย (Cannon &amp; Roe)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1D9E75; --green-dark: #0F6E56; --green-bg: #E1F5EE;
+    --coral: #D85A30; --coral-dark: #993C1D; --coral-bg: #FAECE7;
+    --amber: #EF9F27; --amber-dark: #854F0B; --amber-bg: #FAEEDA;
+    --blue: #185FA5; --blue-bg: #E6F1FB;
+    --success-bg: #E1F5EE; --success-text: #0F6E56;
+    --danger-bg: #FAECE7; --danger-text: #993C1D;
+    --text-primary: #2C2C2A; --text-secondary: #5F5E5A;
+    --border: #D3D1C7; --border-strong: #B4B2A9;
+    --surface: #FFFFFF; --surface-alt: #F1EFE8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', 'Tahoma', sans-serif;
+    background: var(--surface-alt); color: var(--text-primary);
+    margin: 0; padding: 24px 16px 60px; line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .card {
+    background: var(--surface); border-radius: 16px;
+    border: 1px solid var(--border); padding: 28px 28px 32px;
+  }
+  h1 { font-size: 22px; font-weight: 600; color: var(--green-dark); margin: 0 0 4px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 20px; }
+  .section-title { font-size: 15px; font-weight: 500; margin: 0 0 4px; }
+  .section-note { font-size: 12px; color: var(--text-secondary); margin: 0 0 14px; }
+  label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+  input[type=number], select {
+    width: 100%; font-size: 15px; font-family: inherit; padding: 10px 12px;
+    border-radius: 10px; border: 1px solid var(--border-strong);
+    background: var(--surface-alt); color: var(--text-primary); box-sizing: border-box;
+  }
+  input[type=number]:focus, select:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+  .field { margin-bottom: 16px; }
+  .err {
+    font-size: 13px; color: var(--danger-text); margin-top: 6px; display: none;
+  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 26px 0 20px; }
+  .result-box {
+    background: var(--surface-alt); border-radius: 12px; padding: 16px; margin: 14px 0 6px; display: none;
+  }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .result-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+  .result-value { font-size: 20px; font-weight: 600; color: var(--green-dark); }
+  .result-formula {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--text-secondary); font-family: 'Courier New', monospace;
+  }
+  .hint {
+    border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin: 16px 0;
+  }
+  .hint.blue { background: var(--blue-bg); color: var(--blue); }
+  .hint.amber { background: var(--amber-bg); color: var(--amber-dark); }
+  .hint.coral { background: var(--coral-bg); color: var(--coral-dark); }
+  .cite { font-size: 12px; color: var(--text-secondary); border-top: 1px solid var(--border); margin-top: 20px; padding-top: 14px; }
+  footer { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>เครื่องมือคำนวณ Sample Size — ตรวจพบอย่างน้อย 1 หน่วย</h1>
+    <p class="subtitle">สูตร n = ln(1 − Cs) / ln(1 − p) — ใช้เมื่อประชากร (จำนวนเมล็ด/ต้น) มีขนาดใหญ่มากจนถือเป็น "ประชากรไม่จำกัด" เช่น การสุ่มตรวจเมล็ดพันธุ์ในล็อตใหญ่</p>
+
+    <div class="hint amber">
+      <strong>ใช้ต่างจากเครื่องมือ field walking (CDFA):</strong> สูตรนี้ไม่ปรับตามขนาดประชากรจริง (ไม่ใช่ hypergeometric) เหมาะกับกรณีที่ N มีขนาดใหญ่มาก เช่น จำนวนเมล็ดในล็อต หากใช้กับจำนวนต้นในแปลงที่นับได้ไม่มาก (หลักพันต้นลงมา) ควรใช้เครื่องมือ hypergeometric (field walking) แทน เพราะจะได้ n ที่น้อยกว่าและแม่นยำกว่า
+    </div>
+
+    <div class="section-title">กรอกค่าเพื่อคำนวณ</div>
+    <p class="section-note">Cs = ระดับความเชื่อมั่นที่ต้องการตรวจพบให้ได้อย่างน้อย 1 หน่วยที่ติดเชื้อ, p = design prevalence (สัดส่วนติดเชื้อขั้นต่ำที่ต้องตรวจพบให้ได้)</p>
+
+    <div class="field">
+      <label for="conf">ระดับความเชื่อมั่น (Cs)</label>
+      <select id="conf">
+        <option value="0.90">90%</option>
+        <option value="0.95" selected>95%</option>
+        <option value="0.99">99%</option>
+        <option value="custom">กำหนดเอง...</option>
+      </select>
+    </div>
+
+    <div class="field" id="field-conf-custom" style="display:none">
+      <label for="conf-custom">ระดับความเชื่อมั่น กำหนดเอง (%)</label>
+      <input type="number" id="conf-custom" min="0.01" max="99.99" step="0.01" placeholder="เช่น 97.5">
+      <div class="err" id="err-conf-custom">กรอกค่าระหว่าง 0.01 ถึง 99.99</div>
+    </div>
+
+    <div class="field">
+      <label for="prev">design prevalence — p (%)</label>
+      <input type="number" id="prev" min="0.0001" max="100" step="0.001" value="0.1">
+      <div class="err" id="err-prev">กรอกค่าระหว่าง 0.0001 ถึง 100</div>
+    </div>
+
+    <div class="field">
+      <label for="pop">จำนวนหน่วยทั้งหมดในล็อต/แปลง (N) — ไม่บังคับ ใส่เพื่อเช็คว่า N มากพอที่จะใช้สูตรนี้</label>
+      <input type="number" id="pop" min="1" step="1" placeholder="เช่น 50000">
+    </div>
+
+    <div class="result-box" id="result1">
+      <div class="result-grid">
+        <div>
+          <div class="result-label">ต้องสุ่มตรวจอย่างน้อย (n)</div>
+          <div class="result-value" id="out-n">—</div>
+        </div>
+        <div>
+          <div class="result-label">n คิดเป็นสัดส่วนของ N</div>
+          <div class="result-value" id="out-pct" style="font-size:18px">—</div>
+        </div>
+      </div>
+      <div class="result-formula" id="out-formula">—</div>
+    </div>
+
+    <div class="hint coral" id="warn-small-n" style="display:none">
+      <strong>คำเตือน:</strong> n ที่คำนวณได้เกิน 10% ของ N ที่กรอกไว้ — เมื่อ n/N สูงขนาดนี้ สูตรแบบประชากรไม่จำกัดจะประเมินค่าสูงเกินจริง ควรเปลี่ยนไปใช้สูตร hypergeometric (finite population) แทน
+    </div>
+
+    <hr class="divider">
+
+    <div class="hint blue">
+      <strong>ข้อจำกัดสำคัญ:</strong> สูตรนี้สมมติว่าการทดสอบ/การตรวจมีความแม่นยำ 100% (perfect test/perfect detection) และหน่วยที่ติดเชื้อกระจายแบบสุ่ม ในทางปฏิบัติหากวิธีตรวจมีความไว (sensitivity) ต่ำกว่า 100% ต้องปรับ n เพิ่มขึ้นตามสัดส่วนความไวของวิธีตรวจนั้น
+    </div>
+
+    <div class="cite">
+      <strong>ที่มาของสูตร:</strong> n = ln(1 − Cs) / ln(1 − p) เป็นสูตรมาตรฐานสำหรับคำนวณขนาดตัวอย่างเพื่อ "ตรวจพบอย่างน้อย 1 หน่วยที่ติดเชื้อ" ด้วยความเชื่อมั่นที่กำหนด ภายใต้สมมติฐานประชากรขนาดใหญ่/ไม่จำกัด (สุ่มแบบมีการแทนที่โดยประมาณ) มีที่มาจาก Cannon, R.M. and Roe, R.T. (1982). <em>Livestock Disease Surveys: A Field Manual for Veterinarians.</em> Bureau of Range Science, Department of Primary Industry, Australian Government Publishing Service, Canberra. สูตรนี้ถูกนำไปใช้อย่างแพร่หลายในงานเฝ้าระวังโรค ทั้งด้านสัตวแพทย์ (เช่น USDA APHIS) และด้านพืช/เมล็ดพันธุ์ (seed health testing, plant health surveillance) ในเวลาต่อมา
+    </div>
+  </div>
+  <footer>เครื่องมือฝึกภายในสำหรับหลักสูตรผู้ตรวจแปลงเมล็ดพันธุ์ — ใช้งานออฟไลน์ได้หลังโหลดหน้าครั้งแรก (ไม่มีการส่งข้อมูลออกจากเครื่อง)</footer>
+</div>
+
+<script>
+function getConfidence() {
+  var sel = document.getElementById('conf').value;
+  if (sel === 'custom') {
+    var v = parseFloat(document.getElementById('conf-custom').value);
+    return (Number.isFinite(v) && v > 0 && v < 100) ? v / 100 : null;
+  }
+  return parseFloat(sel);
+}
+
+function calc() {
+  var confSel = document.getElementById('conf').value;
+  document.getElementById('field-conf-custom').style.display = (confSel === 'custom') ? 'block' : 'none';
+
+  var prevEl = document.getElementById('prev');
+  var P = parseFloat(prevEl.value) / 100;
+  var prevOk = Number.isFinite(P) && P > 0 && P <= 1;
+  document.getElementById('err-prev').style.display = (prevEl.value !== '' && !prevOk) ? 'block' : 'none';
+
+  var confCustomEl = document.getElementById('conf-custom');
+  var Cs = getConfidence();
+  var confOk = Number.isFinite(Cs) && Cs > 0 && Cs < 1;
+  if (confSel === 'custom') {
+    document.getElementById('err-conf-custom').style.display = (confCustomEl.value !== '' && !confOk) ? 'block' : 'none';
+  }
+
+  var result1 = document.getElementById('result1');
+  var warn = document.getElementById('warn-small-n');
+
+  if (prevOk && confOk) {
+    var n = Math.ceil(Math.log(1 - Cs) / Math.log(1 - P));
+    document.getElementById('out-n').textContent = n.toLocaleString() + ' หน่วย';
+    document.getElementById('out-formula').textContent =
+      'n = ln(1 − ' + Cs.toFixed(4) + ') / ln(1 − ' + P.toFixed(6) + ') = ' + n.toLocaleString();
+
+    var N = parseFloat(document.getElementById('pop').value);
+    var pctText = '—';
+    warn.style.display = 'none';
+    if (Number.isFinite(N) && N > 0) {
+      var ratio = n / N;
+      pctText = (ratio * 100).toFixed(2) + '%';
+      if (ratio > 0.10) warn.style.display = 'block';
+    }
+    document.getElementById('out-pct').textContent = pctText;
+    result1.style.display = 'block';
+  } else {
+    result1.style.display = 'none';
+    warn.style.display = 'none';
+  }
+}
+
+['conf', 'conf-custom', 'prev', 'pop'].forEach(function (id) {
+  document.getElementById(id).addEventListener('input', calc);
+  document.getElementById(id).addEventListener('change', calc);
+});
+calc();
+</script>
+</body>
+</html>
